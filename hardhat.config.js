@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-deploy");
+require("hardhat-gas-reporter");
 require("dotenv").config();
 
 const { GOERLI_RPC_URL, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
@@ -14,15 +15,15 @@ module.exports = {
 			url: GOERLI_RPC_URL || "",
 			accounts: [PRIVATE_KEY],
 			chainId: 5,
-            blockConfirmations: 6
+			blockConfirmations: 6,
 		},
 	},
 	etherscan: {
 		apiKey: ETHERSCAN_API_KEY,
 	},
-    gasReporter: {
-        enabled: true
-    },
+	// gasReporter: {
+	// 	enabled: true,
+	// },
 	namedAccounts: {
 		deployer: {
 			default: 0,

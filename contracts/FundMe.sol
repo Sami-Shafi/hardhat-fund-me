@@ -1,26 +1,66 @@
 // SPDX-License-Identifier: MIT
+
+//!! Pragma
 pragma solidity ^0.8.8;
 
+//!! Imports
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
 
-error NotOwner();
+//!! Errors
+error FundMe_NotOwner();
 
+//!! Interfaces - Libraries - Contracts
+/*
+ *  @title A contract for crowd funcing
+ *  @author Sami Ibn Shafi
+ *  @notice This contract is to demo a sample funding contract
+ *  @dev This implements price feeds as our library
+ */
 contract FundMe {
+    //!! Type declarations
     using PriceConverter for uint256;
 
+    //!! State Variables
     mapping(address => uint256) public addressToAmountFunded;
     address[] public funders;
 
     // Could we make this constant?  /* hint: no! We should make it immutable! */
-    address public immutable i_owner;
+    address public /* immutable */ owner;
     uint256 public constant MINIMUM_USD = 50 * 10 ** 18;
-
     AggregatorV3Interface public priceFeed;
 
+    //!! Events
+    // event Funded(address indexed from, uint256 amount);
+
+    //!! Modifiers
+    modifier onlyOwner() {
+        // require(msg.sender == owner);
+        if (msg.sender != owner) revert FundMe_NotOwner();
+        _;
+    }
+
+    //!! Functions Order:
+    //! constructor
+    //! receive
+    //! fallback
+    //! external
+    //! public
+    //! internal
+    //! private
+    //! view / pure
+
     constructor(address priceFeedAddress) {
-        i_owner = msg.sender;
+        owner = msg.sender;
         priceFeed = AggregatorV3Interface(priceFeedAddress);
+    }
+
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
     }
 
     function fund() public payable {
@@ -31,12 +71,6 @@ contract FundMe {
         // require(PriceConverter.getConversionRate(msg.value) >= MINIMUM_USD, "You need to spend more ETH!");
         addressToAmountFunded[msg.sender] += msg.value;
         funders.push(msg.sender);
-    }
-
-    modifier onlyOwner() {
-        // require(msg.sender == owner);
-        if (msg.sender != i_owner) revert NotOwner();
-        _;
     }
 
     function withdraw() public onlyOwner {
@@ -60,33 +94,4 @@ contract FundMe {
         }("");
         require(callSuccess, "Call failed");
     }
-
-    // Explainer from: https://solidity-by-example.org/fallback/
-    // Ether is sent to contract
-    //      is msg.data empty?
-    //          /   \
-    //         yes  no
-    //         /     \
-    //    receive()?  fallback()
-    //     /   \
-    //   yes   no
-    //  /        \
-    //receive()  fallback()
-
-    fallback() external payable {
-        fund();
-    }
-
-    receive() external payable {
-        fund();
-    }
 }
-
-// Concepts we didn't cover yet (will cover in later sections)
-// 1. Enum
-// 2. Events
-// 3. Try / Catch
-// 4. Function Selector
-// 5. abi.encode / decode
-// 6. Hash with keccak256
-// 7. Yul / Assembly
